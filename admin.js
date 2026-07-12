@@ -1,16 +1,4 @@
-import { 
-  db, 
-  auth, 
-  collection, 
-  doc, 
-  updateDoc, 
-  onSnapshot, 
-  query, 
-  orderBy, 
-  signInWithEmailAndPassword, 
-  signOut, 
-  onAuthStateChanged 
-} from './firebase.js';
+import { db, auth, collection, doc, updateDoc, onSnapshot, query, orderBy, signInWithEmailAndPassword, signOut, onAuthStateChanged } from './firebase.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   const authGateSection = document.getElementById('authGateSection');
@@ -66,8 +54,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = docSnap.data();
         currentLiveOrders.push({ docId: docSnap.id, ...data });
         
-        if (data.status === 'completed' || data.status === 'delivered' || data.status === 'Delivered / Pickup Complete') {
-          revenueCalculated += parseFloat(data.totalPrice || data.total || 0);
+        if (data.status === 'completed' || data.status === 'delivered') {
+          revenueCalculated += data.total;
         }
       });
 
@@ -82,85 +70,51 @@ document.addEventListener('DOMContentLoaded', () => {
     ordersFeedStream.innerHTML = '';
     const filter = statusFilterDropdown.value;
 
-    const filtered = currentLiveOrders.filter(o => {
-      if (filter === 'all') return true;
-      
-      // Normalized tracking maps for matching custom variations
-      if (filter === 'placed' && o.status === 'Order Placed') return true;
-      if (filter === 'received' && o.status === 'Order Received') return true;
-      if (filter === 'preparing' && o.status === 'Preparing') return true;
-      if (filter === 'ready' && (o.status === 'Ready' || o.status === 'Ready for Pickup')) return true;
-      if (filter === 'out_for_delivery' && o.status === 'Out for Delivery') return true;
-      if (filter === 'completed' && (o.status === 'completed' || o.status === 'Delivered / Pickup Complete')) return true;
-      if (filter === 'cancelled' && o.status === 'cancelled') return true;
-      
-      return o.status === filter;
-    });
+    const filtered = currentLiveOrders.filter(o => filter === 'all' || o.status === filter);
 
     if (filtered.length === 0) {
-      ordersFeedStream.innerHTML = '<div style="color:var(--cream-dim); padding: 20px;">No active system records match the tracking scope criteria.</div>';
+      ordersFeedStream.innerHTML = '<div style="color:var(--cream-dim);">No active system records match the tracking scope criteria.</div>';
       return;
     }
 
     filtered.forEach(order => {
       const card = document.createElement('div');
+      card.className = `order-admin-card status-${order.status}`;
       
-      // Class modifier safely generated
-      let safeStatusClass = 'placed';
-      if (order.status === 'Order Placed') safeStatusClass = 'placed';
-      else if (order.status === 'Order Received') safeStatusClass = 'received';
-      else if (order.status === 'Preparing') safeStatusClass = 'preparing';
-      else if (order.status === 'Ready' || order.status === 'Ready for Pickup') safeStatusClass = 'ready';
-      else if (order.status === 'Out for Delivery') safeStatusClass = 'out_for_delivery';
-      else if (order.status === 'Delivered / Pickup Complete' || order.status === 'completed') safeStatusClass = 'completed';
-      else if (order.status === 'cancelled') safeStatusClass = 'cancelled';
-
-      card.className = `order-admin-card status-${safeStatusClass}`;
-      
-      const itemsArray = order.items || [];
-      const itemRows = itemsArray.map(i => `<div>• ${i.name} <strong>x${i.quantity}</strong> ${i.customizations ? `<small style="color:var(--gold); display:block; margin-left:10px;">(${i.customizations})</small>` : ''}</div>`).join('');
+      const itemRows = order.items.map(i => `<div>${i.name} <strong>x${i.quantity}</strong></div>`).join('');
       
       let actionButtons = '';
-      let actionClass = 'admin-card-actions';
-
-      if (order.status === 'Order Placed' || order.status === 'placed') {
-        actionClass += ' two-buttons';
-        actionButtons = `
-          <button class="btn btn-red btn-sm state-change" data-id="${order.docId}" data-target="Order Received">Accept</button>
-          <button class="btn btn-outline btn-sm state-change" data-id="${order.docId}" data-target="cancelled">Cancel</button>
-        `;
-      } else if (order.status === 'Order Received' || order.status === 'received') {
-        actionButtons = `<button class="btn btn-red btn-sm state-change" data-id="${order.docId}" data-target="Preparing">Cook</button>`;
-      } else if (order.status === 'Preparing' || order.status === 'preparing') {
-        const nextReadyState = (order.orderType === 'delivery') ? 'Ready' : 'Ready for Pickup';
-        actionButtons = `<button class="btn btn-red btn-sm state-change" data-id="${order.docId}" data-target="${nextReadyState}">Ready</button>`;
-      } else if (order.status === 'Ready' || order.status === 'Ready for Pickup' || order.status === 'ready') {
-        if (order.orderType === 'delivery') {
-          actionButtons = `<button class="btn btn-red btn-sm state-change" data-id="${order.docId}" data-target="Out for Delivery">Ship Out</button>`;
+      if (order.status === 'placed') {
+        actionButtons = `<button class="btn btn-red btn-sm state-change" data-id="${order.docId}" data-target="received">Accept</button>
+                         <button class="btn btn-outline btn-sm state-change" data-id="${order.docId}" data-target="cancelled">Cancel</button>`;
+      } else if (order.status === 'received') {
+        actionButtons = `<button class="btn btn-red btn-sm state-change" data-id="${order.docId}" data-target="preparing">Cook</button>`;
+      } else if (order.status === 'preparing') {
+        actionButtons = `<button class="btn btn-red btn-sm state-change" data-id="${order.docId}" data-target="ready">Ready</button>`;
+      } else if (order.status === 'ready') {
+        if (order.deliveryType === 'delivery') {
+          actionButtons = `<button class="btn btn-red btn-sm state-change" data-id="${order.docId}" data-target="out_for_delivery">Ship Out</button>`;
         } else {
-          actionButtons = `<button class="btn btn-red btn-sm state-change" data-id="${order.docId}" data-target="Delivered / Pickup Complete">Picked Up</button>`;
+          actionButtons = `<button class="btn btn-red btn-sm state-change" data-id="${order.docId}" data-target="completed">Picked Up</button>`;
         }
-      } else if (order.status === 'Out for Delivery' || order.status === 'out_for_delivery') {
-        actionButtons = `<button class="btn btn-red btn-sm state-change" data-id="${order.docId}" data-target="Delivered / Pickup Complete">Delivered</button>`;
+      } else if (order.status === 'out_for_delivery') {
+        actionButtons = `<button class="btn btn-red btn-sm state-change" data-id="${order.docId}" data-target="completed">Delivered</button>`;
       }
-
-      const totalVal = parseFloat(order.totalPrice || order.total || 0);
-      const displayType = (order.orderType || order.deliveryType || 'pickup').toUpperCase();
 
       card.innerHTML = `
         <div class="admin-card-header">
-          <span class="admin-card-id">#${order.trackingId || 'UNKN'}</span>
-          <span class="admin-card-type">${displayType}</span>
+          <span class="admin-card-id">#${order.orderId}</span>
+          <span class="admin-card-type">${order.deliveryType}</span>
         </div>
         <div class="admin-card-body">
-          <p><strong>Customer:</strong> ${order.customerName || 'Guest'}</p>
-          <p><strong>Phone:</strong> ${order.customerPhone || 'N/A'}</p>
-          ${order.address ? `<p><strong>Address:</strong> ${order.address}</p>` : ''}
-          <p><strong>Notes:</strong> <span style="color:var(--gold-bright);">${order.notes || 'None'}</span></p>
-          <div class="admin-card-items">${itemRows || 'No items listed.'}</div>
-          <p style="margin-top:10px; font-weight:600; text-align:right;">Total: €${totalVal.toFixed(2)}</p>
+          <p><strong>Customer:</strong> ${order.customer.name}</p>
+          <p><strong>Phone:</strong> ${order.customer.phone}</p>
+          <p><strong>Address:</strong> ${order.customer.address} ${order.customer.apartment || ''}</p>
+          <p><strong>Notes:</strong> <span style="color:var(--gold-bright);">${order.customer.notes || 'None'}</span></p>
+          <div class="admin-card-items">${itemRows}</div>
+          <p style="margin-top:10px; font-weight:600; text-align:right;">Total: €${order.total.toFixed(2)}</p>
         </div>
-        <div class="${actionClass}">
+        <div class="admin-card-actions">
           ${actionButtons}
         </div>
       `;
@@ -168,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
       ordersFeedStream.appendChild(card);
     });
 
-    // Hook reactive pipeline click event listeners
+    // Attach dynamic click event interceptors to update status instantly
     ordersFeedStream.querySelectorAll('.state-change').forEach(button => {
       button.addEventListener('click', async (e) => {
         const docId = button.dataset.id;
@@ -178,7 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const orderRef = doc(db, "orders", docId);
           await updateDoc(orderRef, { status: targetStatus });
         } catch (err) {
-          console.error("Failed executing operational status transition update: ", err);
+          console.error("Failed executing operational transaction status change: ", err);
         }
       });
     });
