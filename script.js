@@ -1,20 +1,14 @@
-/* =========================================================================
-   SMOKE & SLICE — SITE SCRIPT
-   Sections: Navigation | Reveal animations | Menu rendering |
-             Cart | Checkout | Toast
-   Depends on MENU_DATA and ALLERGEN_LEGEND from menu.js (loaded first).
-   ========================================================================= */
+import { db, collection, addDoc, serverTimestamp } from './firebase.js';
 
 document.addEventListener('DOMContentLoaded', () => {
-
   /* ======================================================================
-     1. NAVIGATION
+     1. NAVIGATION & LAYOUT INITIALIZATION
      ====================================================================== */
-  const siteHeader   = document.getElementById('siteHeader');
-  const navToggle     = document.getElementById('navToggle');
-  const navLinks      = document.getElementById('navLinks');
-  const navBackdrop   = document.getElementById('navBackdrop');
-  const navLinkItems  = document.querySelectorAll('.nav-link');
+  const siteHeader = document.getElementById('siteHeader');
+  const navToggle = document.getElementById('navToggle');
+  const navLinks = document.getElementById('navLinks');
+  const navBackdrop = document.getElementById('navBackdrop');
+  const navLinkItems = document.querySelectorAll('.nav-link');
 
   function closeMobileNav() {
     navLinks.classList.remove('mobile-open');
@@ -27,168 +21,33 @@ document.addEventListener('DOMContentLoaded', () => {
     navToggle.classList.toggle('open', isOpen);
     navBackdrop.classList.toggle('open', isOpen);
   });
+  
   navBackdrop.addEventListener('click', closeMobileNav);
   navLinkItems.forEach(link => link.addEventListener('click', closeMobileNav));
 
-  // Shrink header + highlight active section on scroll
-  const sections = ['home', 'menu', 'about', 'contact']
-    .map(id => document.getElementById(id))
-    .filter(Boolean);
-
-  function onScroll() {
-    siteHeader.classList.toggle('scrolled', window.scrollY > 40);
-
-    let current = sections[0];
-    const scrollPos = window.scrollY + 140;
-    sections.forEach(sec => { if (sec.offsetTop <= scrollPos) current = sec; });
-
-    navLinkItems.forEach(link => {
-      link.classList.toggle('active', link.getAttribute('href') === '#' + current.id);
-    });
-  }
-  window.addEventListener('scroll', onScroll, { passive: true });
-  onScroll();
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 50) {
+      siteHeader.classList.add('scrolled');
+    } else {
+      siteHeader.classList.remove('scrolled');
+    }
+  });
 
   /* ======================================================================
-     2. REVEAL-ON-SCROLL ANIMATIONS
+     2. CART LOGIC STORAGE & ACTIONS
      ====================================================================== */
-  const revealTargets = document.querySelectorAll('.reveal, .menu-card, .delivery-card, .sauce-card');
-  revealTargets.forEach(el => el.classList.add('reveal'));
-
-  const revealObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('is-visible');
-        revealObserver.unobserve(entry.target);
-      }
-    });
-  }, { threshold: 0.12 });
-
-  function observeReveal(el) { revealObserver.observe(el); }
-  document.querySelectorAll('.reveal').forEach(observeReveal);
-
-  /* ======================================================================
-     3. MENU RENDERING
-     ====================================================================== */
-  const menuTabsEl  = document.getElementById('menuTabs');
-  const menuGridEl  = document.getElementById('menuGrid');
-  const allergenListEl = document.getElementById('allergenList');
-  let activeCategory = MENU_DATA[0].id;
-
-  function buildTabs() {
-    menuTabsEl.innerHTML = MENU_DATA.map(cat => `
-      <button class="menu-tab ${cat.id === activeCategory ? 'active' : ''}" data-cat="${cat.id}">
-        ${cat.label}
-      </button>
-    `).join('');
-
-    menuTabsEl.querySelectorAll('.menu-tab').forEach(tab => {
-      tab.addEventListener('click', () => {
-        activeCategory = tab.dataset.cat;
-        buildTabs();
-        renderMenu();
-      });
-    });
-  }
-
-  function currencyFmt(num) {
-    return '€' + num.toFixed(2);
-  }
-
-  function renderMenu() {
-    const category = MENU_DATA.find(c => c.id === activeCategory);
-    if (!category) return;
-
-    if (category.id === 'sauces') {
-      menuGridEl.style.display = 'none';
-      renderSauces(category);
-      return;
-    }
-
-    // remove any sauce grid leftover
-    const existingSauceGrid = document.getElementById('sauceGrid');
-    if (existingSauceGrid) existingSauceGrid.remove();
-    menuGridEl.style.display = 'grid';
-
-    menuGridEl.innerHTML = category.items.map(item => `
-      <article class="menu-card reveal" data-id="${item.id}">
-        <div class="menu-card-media">
-          <img src="${item.image}" alt="${item.name}" loading="lazy">
-          <span class="menu-card-cat">${category.label}</span>
-        </div>
-        <div class="menu-card-body">
-          <div class="menu-card-top">
-            <h3 class="menu-card-name">${item.name}</h3>
-            <span class="menu-card-price">${currencyFmt(item.price)}</span>
-          </div>
-          <p class="menu-card-desc">${item.description}</p>
-          ${item.allergens.length ? `<p class="menu-card-allergens">Allergens: ${item.allergens.join(', ')}</p>` : ''}
-          <button class="add-to-cart" data-id="${item.id}" data-cat="${category.id}">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-            Add To Cart
-          </button>
-        </div>
-      </article>
-    `).join('');
-
-    menuGridEl.querySelectorAll('.menu-card').forEach(observeReveal);
-    bindAddToCartButtons();
-  }
-
-  function renderSauces(category) {
-    let sauceGrid = document.getElementById('sauceGrid');
-    if (!sauceGrid) {
-      sauceGrid = document.createElement('div');
-      sauceGrid.className = 'sauce-grid';
-      sauceGrid.id = 'sauceGrid';
-      menuGridEl.after(sauceGrid);
-    }
-    sauceGrid.innerHTML = category.items.map(item => `
-      <div class="sauce-card reveal" data-id="${item.id}">
-        <div class="sauce-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f3e9d6" stroke-width="1.8"><path d="M8 2h8M9 2v5.5L4.5 15a2 2 0 0 0 1.7 3h11.6a2 2 0 0 0 1.7-3L15 7.5V2"/></svg>
-        </div>
-        <div class="sauce-name">${item.name}</div>
-        <div class="sauce-price">${currencyFmt(item.price)}</div>
-        <button class="add-to-cart" data-id="${item.id}" data-cat="${category.id}">Add</button>
-      </div>
-    `).join('');
-    sauceGrid.querySelectorAll('.sauce-card').forEach(observeReveal);
-    bindAddToCartButtons();
-  }
-
-  function buildAllergenLegend() {
-    allergenListEl.innerHTML = Object.entries(ALLERGEN_LEGEND).map(([num, name]) => `
-      <span><b>${num}</b> — ${name}</span>
-    `).join('');
-  }
-
-  buildTabs();
-  renderMenu();
-  buildAllergenLegend();
-
-  /* ======================================================================
-     4. CART
-     ====================================================================== */
-  let cart = []; // { id, name, price, image, qty }
-
-  const cartToggle   = document.getElementById('cartToggle');
-  const cartClose     = document.getElementById('cartClose');
-  const cartOverlay   = document.getElementById('cartOverlay');
-  const cartPanel     = document.getElementById('cartPanel');
-  const cartItemsEl   = document.getElementById('cartItems');
-  const cartCountEl   = document.getElementById('cartCount');
-  const cartTotalEl   = document.getElementById('cartTotal');
-  const emptyCartBtn  = document.getElementById('emptyCartBtn');
-  const checkoutBtn   = document.getElementById('checkoutBtn');
-
-  function findMenuItem(id) {
-    for (const cat of MENU_DATA) {
-      const found = cat.items.find(i => i.id === id);
-      if (found) return found;
-    }
-    return null;
-  }
+  let cart = [];
+  const cartToggle = document.getElementById('cartToggle');
+  const cartClose = document.getElementById('cartClose');
+  const cartPanel = document.getElementById('cartPanel');
+  const cartOverlay = document.getElementById('cartOverlay');
+  const cartItemsContainer = document.getElementById('cartItems');
+  const cartTotalAmount = document.getElementById('cartTotal');
+  const cartBadge = document.getElementById('cartBadge');
+  const checkoutBtn = document.getElementById('checkoutBtn');
+  const emptyCartBtn = document.getElementById('emptyCartBtn');
+  const checkoutModal = document.getElementById('checkoutModal');
+  const checkoutBox = document.getElementById('checkoutBox');
 
   function openCart() {
     cartPanel.classList.add('open');
@@ -198,313 +57,316 @@ document.addEventListener('DOMContentLoaded', () => {
     cartPanel.classList.remove('open');
     cartOverlay.classList.remove('open');
   }
+
   cartToggle.addEventListener('click', openCart);
   cartClose.addEventListener('click', closeCart);
   cartOverlay.addEventListener('click', closeCart);
 
-  function addToCart(id) {
-    const item = findMenuItem(id);
-    if (!item) return;
-    const existing = cart.find(c => c.id === id);
-    if (existing) {
-      existing.qty += 1;
-    } else {
-      cart.push({ id: item.id, name: item.name, price: item.price, image: item.image, qty: 1 });
-    }
-    renderCart();
-    openCart();
-    showToast(`${item.name} added to your order`);
-  }
-
-  function changeQty(id, delta) {
-    const line = cart.find(c => c.id === id);
-    if (!line) return;
-    line.qty += delta;
-    if (line.qty <= 0) cart = cart.filter(c => c.id !== id);
-    renderCart();
-  }
-
-  function removeItem(id) {
-    cart = cart.filter(c => c.id !== id);
-    renderCart();
-  }
-
-  function cartTotal() {
-    return cart.reduce((sum, c) => sum + c.price * c.qty, 0);
-  }
-
-  function cartCount() {
-    return cart.reduce((sum, c) => sum + c.qty, 0);
-  }
-
-  function renderCart() {
-    cartCountEl.textContent = cartCount();
-    cartTotalEl.textContent = currencyFmt(cartTotal());
-    checkoutBtn.disabled = cart.length === 0;
-
-    if (cart.length === 0) {
-      cartItemsEl.innerHTML = `<div class="cart-empty">Your cart is empty. Add something delicious from the menu.</div>`;
-      return;
-    }
-
-    cartItemsEl.innerHTML = cart.map(line => `
-      <div class="cart-item" data-id="${line.id}">
-        ${line.image
-          ? `<img src="${line.image}" alt="${line.name}">`
-          : `<div class="cart-item-noimg">${line.name.charAt(0)}</div>`}
-        <div>
-          <div class="cart-item-name">${line.name}</div>
-          <div class="cart-item-price">${currencyFmt(line.price)} each</div>
-        </div>
-        <div class="cart-item-actions">
-          <div class="qty-control">
-            <button class="qty-minus" data-id="${line.id}" aria-label="Decrease quantity">−</button>
-            <span>${line.qty}</span>
-            <button class="qty-plus" data-id="${line.id}" aria-label="Increase quantity">+</button>
-          </div>
-          <button class="remove-item" data-id="${line.id}">Remove</button>
-        </div>
-      </div>
-    `).join('');
-
-    cartItemsEl.querySelectorAll('.qty-plus').forEach(btn =>
-      btn.addEventListener('click', () => changeQty(btn.dataset.id, 1)));
-    cartItemsEl.querySelectorAll('.qty-minus').forEach(btn =>
-      btn.addEventListener('click', () => changeQty(btn.dataset.id, -1)));
-    cartItemsEl.querySelectorAll('.remove-item').forEach(btn =>
-      btn.addEventListener('click', () => removeItem(btn.dataset.id)));
-  }
-
-  function bindAddToCartButtons() {
-    document.querySelectorAll('.add-to-cart').forEach(btn => {
-      btn.addEventListener('click', () => {
-        addToCart(btn.dataset.id);
-        btn.classList.add('added');
-        const original = btn.innerHTML;
-        btn.innerHTML = 'Added ✓';
-        setTimeout(() => { btn.classList.remove('added'); btn.innerHTML = original; }, 1100);
-      });
-    });
-  }
-
   emptyCartBtn.addEventListener('click', () => {
     cart = [];
     renderCart();
+    showToast("Cart cleared.");
   });
 
-  renderCart();
+  window.addToCart = function(id, name, price) {
+    const existing = cart.find(item => item.id === id);
+    if (existing) {
+      existing.quantity += 1;
+    } else {
+      cart.push({ id, name, price, quantity: 1 });
+    }
+    renderCart();
+    showToast(`${name} added to cart.`);
+  };
+
+  function updateQuantity(id, delta) {
+    const idx = cart.findIndex(item => item.id === id);
+    if (idx !== -1) {
+      cart[idx].quantity += delta;
+      if (cart[idx].quantity <= 0) {
+        cart.splice(idx, 1);
+      }
+      renderCart();
+    }
+  }
+
+  function renderCart() {
+    cartItemsContainer.innerHTML = '';
+    if (cart.length === 0) {
+      cartItemsContainer.innerHTML = '<div class="cart-empty">Your cart is empty. Add something delicious from the menu.</div>';
+      cartTotalAmount.textContent = '€0.00';
+      cartBadge.textContent = '0';
+      checkoutBtn.disabled = true;
+      return;
+    }
+
+    let total = 0;
+    let totalItems = 0;
+
+    cart.forEach(item => {
+      total += item.price * item.quantity;
+      totalItems += item.quantity;
+
+      const row = document.createElement('div');
+      row.className = 'cart-item';
+      row.innerHTML = `
+        <div class="cart-item-info">
+          <div class="cart-item-name">${item.name}</div>
+          <div class="cart-item-price">€${(item.price * item.quantity).toFixed(2)}</div>
+        </div>
+        <div class="cart-item-actions">
+          <button class="qty-btn minus" data-id="${item.id}">-</button>
+          <span>${item.quantity}</span>
+          <button class="qty-btn plus" data-id="${item.id}">+</button>
+        </div>
+      `;
+      cartItemsContainer.appendChild(row);
+    });
+
+    cartTotalAmount.textContent = `€${total.toFixed(2)}`;
+    cartBadge.textContent = totalItems;
+    checkoutBtn.disabled = false;
+
+    cartItemsContainer.querySelectorAll('.qty-btn.minus').forEach(b => {
+      b.addEventListener('click', () => updateQuantity(b.dataset.id, -1));
+    });
+    cartItemsContainer.querySelectorAll('.qty-btn.plus').forEach(b => {
+      b.addEventListener('click', () => updateQuantity(b.dataset.id, 1));
+    });
+  }
 
   /* ======================================================================
-     5. CHECKOUT
+     3. SYSTEM RENDERING FOR PRODUCTS
      ====================================================================== */
-  const checkoutModal = document.getElementById('checkoutModal');
-  const checkoutBox   = document.getElementById('checkoutBox');
+  const menuTabs = document.getElementById('menuTabs');
+  const menuGrid = document.getElementById('menuGrid');
 
-  function deliveryFee(distanceKey) {
-    switch (distanceKey) {
-      case '0-2': return { fee: 0, label: 'Free (0–2 km)' };
-      case '2-5': return { fee: 3, label: '€3.00 (2–5 km)' };
-      case '5-8': return { fee: 4, label: '€4.00 (5–8 km)' };
-      case '8plus': return { fee: null, label: 'Restaurant will contact you regarding delivery fee' };
-      default: return { fee: 0, label: '—' };
+  function renderMenu() {
+    if (!menuTabs || !menuGrid) return;
+    menuTabs.innerHTML = '';
+    menuGrid.innerHTML = '';
+
+    MENU_DATA.forEach((cat, idx) => {
+      const tab = document.createElement('button');
+      tab.className = `tab-btn ${idx === 0 ? 'active' : ''}`;
+      tab.textContent = cat.label;
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        tab.classList.add('active');
+        filterCategory(cat.id);
+      });
+      menuTabs.appendChild(tab);
+    });
+
+    if (MENU_DATA.length > 0) {
+      filterCategory(MENU_DATA[0].id);
     }
   }
 
-  function buildCheckoutForm() {
-    const subtotal = cartTotal();
+  function filterCategory(catId) {
+    menuGrid.innerHTML = '';
+    const category = MENU_DATA.find(c => c.id === catId);
+    if (!category) return;
 
-    checkoutBox.innerHTML = `
-      <div class="checkout-head">
-        <div>
-          <h3>Complete Your Order</h3>
-          <p>Cash on Delivery or Pay at Pickup — QR payment coming soon.</p>
+    category.items.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'menu-card';
+      const imgHtml = item.image ? `<img src="${item.image}" alt="${item.name}" class="menu-img">` : '<div class="menu-img-placeholder">Smoke & Slice</div>';
+      
+      card.innerHTML = `
+        ${imgHtml}
+        <div class="menu-details">
+          <div class="menu-meta">
+            <h4 class="menu-name">${item.name}</h4>
+            <span class="menu-price">€${item.price.toFixed(2)}</span>
+          </div>
+          <p class="menu-desc">${item.description || 'No description available.'}</p>
+          <button class="btn btn-red btn-sm" onclick="addToCart('${item.id}', '${item.name}', ${item.price})">Add to Order</button>
         </div>
-        <button class="icon-btn" id="checkoutClose" aria-label="Close checkout">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
-      </div>
-
-      <form id="orderForm">
-        <div class="fulfilment-toggle">
-          <label><input type="radio" name="fulfilment" value="delivery" checked><span>Delivery</span></label>
-          <label><input type="radio" name="fulfilment" value="pickup"><span>Pickup</span></label>
-        </div>
-
-        <div class="form-grid">
-          <div class="form-field full">
-            <label for="custName">Customer Name</label>
-            <input type="text" id="custName" name="custName" required placeholder="Full name">
-          </div>
-          <div class="form-field">
-            <label for="custPhone">Phone Number</label>
-            <input type="tel" id="custPhone" name="custPhone" required placeholder="+371 ...">
-          </div>
-          <div class="form-field">
-            <label for="custEmail">Email</label>
-            <input type="email" id="custEmail" name="custEmail" required placeholder="you@example.com">
-          </div>
-
-          <div class="form-field full" id="addressField">
-            <label for="custAddress">Address</label>
-            <input type="text" id="custAddress" name="custAddress" placeholder="Street and house number">
-          </div>
-          <div class="form-field" id="apartmentField">
-            <label for="custApartment">Apartment</label>
-            <input type="text" id="custApartment" name="custApartment" placeholder="Apt / unit (optional)">
-          </div>
-          <div class="form-field" id="postalField">
-            <label for="custPostal">Postal Code</label>
-            <input type="text" id="custPostal" name="custPostal" placeholder="LV-....">
-          </div>
-
-          <div class="form-field full" id="distanceField">
-            <label for="custDistance">Distance From Restaurant</label>
-            <select id="custDistance" name="custDistance">
-              <option value="0-2">0–2 km — Free delivery</option>
-              <option value="2-5">2–5 km — €3.00</option>
-              <option value="5-8">5–8 km — €4.00</option>
-              <option value="8plus">Over 8 km — restaurant will confirm fee</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="payment-options">
-          <label><input type="radio" name="payment" value="cash" checked> Cash on Delivery</label>
-          <label><input type="radio" name="payment" value="pickup-pay"> Pay at Pickup</label>
-        </div>
-
-        <div class="form-field full" style="margin-bottom:22px;">
-          <label for="custNotes">Special Instructions</label>
-          <textarea id="custNotes" name="custNotes" placeholder="Allergies, extra sauce, cheese on fries, etc."></textarea>
-        </div>
-
-        <div class="order-summary">
-          <h4>Order Summary</h4>
-          <div id="summaryLines"></div>
-          <div class="summary-line"><span>Subtotal</span><span>${currencyFmt(subtotal)}</span></div>
-          <div class="summary-line" id="deliveryFeeLine"><span>Delivery Fee</span><span id="deliveryFeeAmount">Free (0–2 km)</span></div>
-          <div class="summary-line total"><span>Grand Total</span><span id="grandTotalAmount">${currencyFmt(subtotal)}</span></div>
-          <p class="delivery-note" id="deliveryNote"></p>
-        </div>
-
-        <button type="submit" class="btn btn-red btn-block">Place Order</button>
-      </form>
-    `;
-
-    document.getElementById('checkoutClose').addEventListener('click', closeCheckout);
-
-    const summaryLines = document.getElementById('summaryLines');
-    summaryLines.innerHTML = cart.map(line => `
-      <div class="summary-line"><span>${line.qty} × ${line.name}</span><span>${currencyFmt(line.price * line.qty)}</span></div>
-    `).join('');
-
-    const distanceField   = document.getElementById('distanceField');
-    const addressField    = document.getElementById('addressField');
-    const apartmentField  = document.getElementById('apartmentField');
-    const postalField     = document.getElementById('postalField');
-    const distanceSelect  = document.getElementById('custDistance');
-    const feeAmountEl     = document.getElementById('deliveryFeeAmount');
-    const grandTotalEl    = document.getElementById('grandTotalAmount');
-    const deliveryNoteEl  = document.getElementById('deliveryNote');
-    const addressInput    = document.getElementById('custAddress');
-
-    function updateTotals() {
-      const isDelivery = document.querySelector('input[name="fulfilment"]:checked').value === 'delivery';
-      distanceField.style.display   = isDelivery ? '' : 'none';
-      addressField.style.display    = isDelivery ? '' : 'none';
-      apartmentField.style.display  = isDelivery ? '' : 'none';
-      postalField.style.display     = isDelivery ? '' : 'none';
-      addressInput.required = isDelivery;
-
-      let grand = subtotal;
-      if (isDelivery) {
-        const { fee, label } = deliveryFee(distanceSelect.value);
-        feeAmountEl.textContent = label;
-        if (fee === null) {
-          deliveryNoteEl.textContent = "Restaurant will contact you regarding delivery fee.";
-          grandTotalEl.textContent = currencyFmt(subtotal) + ' + delivery TBC';
-        } else {
-          deliveryNoteEl.textContent = '';
-          grand = subtotal + fee;
-          grandTotalEl.textContent = currencyFmt(grand);
-        }
-      } else {
-        feeAmountEl.textContent = 'Pickup — no fee';
-        deliveryNoteEl.textContent = '';
-        grandTotalEl.textContent = currencyFmt(subtotal);
-      }
-    }
-
-    document.querySelectorAll('input[name="fulfilment"]').forEach(r => r.addEventListener('change', updateTotals));
-    distanceSelect.addEventListener('change', updateTotals);
-    updateTotals();
-
-    document.getElementById('orderForm').addEventListener('submit', (e) => {
-      e.preventDefault();
-      submitOrder(subtotal);
+      `;
+      menuGrid.appendChild(card);
     });
   }
 
-  function submitOrder(subtotal) {
-    const form = document.getElementById('orderForm');
-    const data = new FormData(form);
-    const isDelivery = data.get('fulfilment') === 'delivery';
-    const { fee, label } = isDelivery ? deliveryFee(data.get('custDistance')) : { fee: 0, label: 'Pickup' };
-    const grand = fee === null ? subtotal : subtotal + fee;
-
-    const orderLines = cart.map(l => `${l.qty}x ${l.name} — ${currencyFmt(l.price * l.qty)}`).join('%0A');
-
-    const message =
-      `*New Order — Smoke %26 Slice*%0A%0A` +
-      `Name: ${encodeURIComponent(data.get('custName'))}%0A` +
-      `Phone: ${encodeURIComponent(data.get('custPhone'))}%0A` +
-      `Email: ${encodeURIComponent(data.get('custEmail'))}%0A` +
-      `Fulfilment: ${isDelivery ? 'Delivery' : 'Pickup'}%0A` +
-      (isDelivery ? `Address: ${encodeURIComponent(data.get('custAddress'))}, Apt ${encodeURIComponent(data.get('custApartment') || '-')}, ${encodeURIComponent(data.get('custPostal') || '-')}%0A` : '') +
-      `Payment: ${data.get('payment') === 'cash' ? 'Cash on Delivery' : 'Pay at Pickup'}%0A%0A` +
-      `Order:%0A${orderLines}%0A%0A` +
-      `Subtotal: ${currencyFmt(subtotal)}%0A` +
-      `Delivery: ${label}%0A` +
-      `Grand Total: ${fee === null ? currencyFmt(subtotal) + ' + delivery TBC' : currencyFmt(grand)}%0A%0A` +
-      `Notes: ${encodeURIComponent(data.get('custNotes') || '-')}`;
-
-    const waLink = `https://wa.me/37129367093?text=${message}`;
-
-    checkoutBox.innerHTML = `
-      <div class="checkout-success">
-        <div class="check-icon">
-          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-        </div>
-        <h3>Order Ready To Send</h3>
-        <p>Tap below to send your order details to Smoke &amp; Slice on WhatsApp, or call us directly to confirm. We'll reach out to arrange ${isDelivery ? 'delivery' : 'pickup'} and payment${fee === null ? ' — including your delivery fee, since you\'re over 8 km away' : ''}.</p>
-        <div class="hero-actions" style="margin-bottom:16px;">
-          <a href="${waLink}" target="_blank" rel="noopener" class="btn btn-gold">Send Order via WhatsApp</a>
-          <a href="tel:+37129367093" class="btn btn-outline">Call Instead</a>
-        </div>
-        <button class="cart-empty-btn" id="closeSuccessBtn">Close</button>
-      </div>
-    `;
-    document.getElementById('closeSuccessBtn').addEventListener('click', () => {
-      closeCheckout();
-      cart = [];
-      renderCart();
-    });
-  }
-
+  /* ======================================================================
+     4. BACKEND INTEGRATED FIREBASE CHECKOUT SUBMISSION FLOW
+     ====================================================================== */
   function openCheckout() {
     if (cart.length === 0) return;
     buildCheckoutForm();
     checkoutModal.classList.add('open');
     closeCart();
   }
+
   function closeCheckout() {
     checkoutModal.classList.remove('open');
   }
 
   checkoutBtn.addEventListener('click', openCheckout);
 
+  function buildCheckoutForm() {
+    let subtotal = cart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+    checkoutBox.innerHTML = `
+      <div class="checkout-header">
+        <h3>Complete Your Order</h3>
+        <button class="icon-btn" id="closeCheckoutForm">&times;</button>
+      </div>
+      <form id="orderSubmissionForm" class="checkout-form">
+        <div class="form-group">
+          <label>Full Name *</label>
+          <input type="text" id="custName" required placeholder="E.g. John Doe">
+        </div>
+        <div class="form-group">
+          <label>Phone Number *</label>
+          <input type="tel" id="custPhone" required placeholder="E.g. +371 20000000">
+        </div>
+        <div class="form-group">
+          <label>Order Fulfillment *</label>
+          <select id="fulfillmentType">
+            <option value="delivery">Delivery (€2.50)</option>
+            <option value="pickup">Self-Pickup (Free)</option>
+          </select>
+        </div>
+        <div id="deliveryFields">
+          <div class="form-group">
+            <label>Delivery Address *</label>
+            <input type="text" id="custAddress" placeholder="Street, City">
+          </div>
+          <div class="form-group">
+            <label>Apartment / Suite</label>
+            <input type="text" id="custApartment" placeholder="Apt 4B">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Payment Method *</label>
+          <select id="payMethod">
+            <option value="card">Credit / Debit Card</option>
+            <option value="cash">Cash on Delivery / Pickup</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Special Notes or Instructions</label>
+          <textarea id="orderNotes" rows="2" placeholder="Allergies, delivery dropoff notes..."></textarea>
+        </div>
+        <div class="summary-breakdown">
+          <div class="summary-line"><span>Subtotal:</span><span>€${subtotal.toFixed(2)}</span></div>
+          <div class="summary-line"><span id="chargeLabel">Delivery Fee:</span><span id="chargeAmt">€2.50</span></div>
+          <hr>
+          <div class="summary-line total"><span>Total:</span><span id="finalOrderTotal">€${(subtotal + 2.50).toFixed(2)}</span></div>
+        </div>
+        <button type="submit" class="btn btn-red btn-block" style="margin-top: 15px;">PLACE ORDER</button>
+      </form>
+    `;
+
+    document.getElementById('closeCheckoutForm').addEventListener('click', closeCheckout);
+    
+    const fulfillmentSelect = document.getElementById('fulfillmentType');
+    const deliveryFields = document.getElementById('deliveryFields');
+    const chargeLabel = document.getElementById('chargeLabel');
+    const chargeAmt = document.getElementById('chargeAmt');
+    const finalOrderTotal = document.getElementById('finalOrderTotal');
+    const addressInput = document.getElementById('custAddress');
+
+    fulfillmentSelect.addEventListener('change', () => {
+      if (fulfillmentSelect.value === 'pickup') {
+        deliveryFields.style.display = 'none';
+        addressInput.required = false;
+        chargeLabel.textContent = "Self-Pickup:";
+        chargeAmt.textContent = "Free";
+        finalOrderTotal.textContent = `€${subtotal.toFixed(2)}`;
+      } else {
+        deliveryFields.style.display = 'block';
+        addressInput.required = true;
+        chargeLabel.textContent = "Delivery Fee:";
+        chargeAmt.textContent = "€2.50";
+        finalOrderTotal.textContent = `€${(subtotal + 2.50).toFixed(2)}`;
+      }
+    });
+
+    document.getElementById('orderSubmissionForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const isDelivery = fulfillmentSelect.value === 'delivery';
+      const orderIdNum = Math.floor(1000 + Math.random() * 9000).toString(); 
+      const finalTotal = isDelivery ? subtotal + 2.50 : subtotal;
+
+      const orderPayload = {
+        orderId: orderIdNum,
+        customer: {
+          name: document.getElementById('custName').value.trim(),
+          phone: document.getElementById('custPhone').value.trim(),
+          address: isDelivery ? addressInput.value.trim() : 'Self-Pickup',
+          apartment: isDelivery ? document.getElementById('custApartment').value.trim() : '',
+          notes: document.getElementById('orderNotes').value.trim()
+        },
+        items: cart,
+        deliveryType: fulfillmentSelect.value,
+        paymentMethod: document.getElementById('payMethod').value,
+        subtotal: subtotal,
+        deliveryFee: isDelivery ? 2.50 : 0.00,
+        total: finalTotal,
+        status: 'placed',
+        createdAt: serverTimestamp()
+      };
+
+      try {
+        await addDoc(collection(db, "orders"), orderPayload);
+        
+        // Notify Owner via Free Telegram Channel Bot System Async
+        sendTelegramNotification(orderPayload);
+
+        // Success Output Confirmation Screen
+        checkoutBox.innerHTML = `
+          <div class="success-screen" style="text-align:center; padding: 40px 20px;">
+            <div style="font-size: 48px; color: var(--gold); margin-bottom: 20px;">✓</div>
+            <h3>Order Confirmed!</h3>
+            <p style="margin: 15px 0; font-family: 'Cinzel', serif; font-size: 1.5rem; color: var(--gold-bright);">Order #${orderIdNum}</p>
+            <p style="color: var(--cream-dim); font-size: 0.95rem;">Your real-time order tracking details are ready.</p>
+            <div style="margin-top: 25px; display: flex; flex-direction: column; gap: 10px;">
+              <a href="tracking.html?id=${orderIdNum}" class="btn btn-red">Go to Live Tracking Page</a>
+              <button class="btn btn-outline" id="clearFinishBtn">Back to Main Screen</button>
+            </div>
+          </div>
+        `;
+
+        document.getElementById('clearFinishBtn').addEventListener('click', () => {
+          closeCheckout();
+          cart = [];
+          renderCart();
+        });
+
+      } catch (err) {
+        console.error("Error committing order to Firestore Database: ", err);
+        showToast("Error processing order. Please try again.");
+      }
+    });
+  }
+
+  // Telegram Dynamic Forwarder
+  function sendTelegramNotification(order) {
+    const BOT_TOKEN = "YOUR_TELEGRAM_BOT_TOKEN"; 
+    const CHAT_ID = "YOUR_TELEGRAM_CHAT_ID"; 
+    if(BOT_TOKEN === "YOUR_TELEGRAM_BOT_TOKEN") return; // Skip if configuration variables are default
+
+    let itemLines = order.items.map(i => `• ${i.name} x${i.quantity}`).join('\n');
+    let message = `🔔 *New Order Received!* \n\n` +
+                  `*Order ID:* #${order.orderId}\n` +
+                  `*Customer:* ${order.customer.name}\n` +
+                  `*Phone:* ${order.customer.phone}\n` +
+                  `*Type:* ${order.deliveryType.toUpperCase()}\n` +
+                  `*Address:* ${order.customer.address} ${order.customer.apartment}\n\n` +
+                  `*Items Ordered:*\n${itemLines}\n\n` +
+                  `*Total Amount:* €${order.total.toFixed(2)}`;
+
+    fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: CHAT_ID, text: message, parse_mode: 'Markdown' })
+    }).catch(e => console.error("Telegram notification delivery failed:", e));
+  }
+
   /* ======================================================================
-     6. TOAST
+     5. TOAST COMPONENT LOGIC
      ====================================================================== */
   const toastEl = document.getElementById('toast');
   let toastTimer;
@@ -512,7 +374,9 @@ document.addEventListener('DOMContentLoaded', () => {
     clearTimeout(toastTimer);
     toastEl.textContent = msg;
     toastEl.classList.add('show');
-    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2200);
+    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 3000);
   }
 
+  // Bootstrap Execution Core
+  renderMenu();
 });
