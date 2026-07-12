@@ -1,234 +1,39 @@
-/* =========================================================================
-   SMOKE & SLICE — ADMIN DASHBOARD STYLESHEET
-   ========================================================================= */
-
 .auth-gate-wrapper {
-  height: 100vh; 
-  display: flex; 
-  align-items: center; 
-  justify-content: center;
+  height: 100vh; display: flex; align-items: center; justify-content: center;
   background: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.9)), url('https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1920&q=80');
   background-size: cover;
 }
+.login-card { background: var(--charcoal); border: 1px solid var(--gold); padding: 40px; width: 100%; max-width: 420px; text-align: center; }
+.login-logo { width: 70px; height: 70px; border-radius: 50%; border: 1px solid var(--gold); margin-bottom: 20px; }
+.login-card h2 { font-family: 'Cinzel', serif; color: var(--gold); margin-bottom: 8px; }
+.login-card p { color: var(--cream-dim); font-size: 0.9rem; margin-bottom: 24px; }
 
-.login-card { 
-  background: var(--charcoal); 
-  border: 1px solid var(--gold); 
-  padding: 40px; 
-  width: 100%; 
-  max-width: 420px; 
-  text-align: center; 
-}
+.admin-dashboard-layout { display: flex; height: 100vh; overflow: hidden; }
+.sidebar-navigation { width: 280px; background: var(--black-soft); border-right: 1px solid var(--line); padding: 30px; display: flex; flex-direction: column; gap: 30px; }
+.sidebar-brand { display: flex; align-items: center; gap: 12px; font-family: 'Cinzel', serif; font-size: 1.2rem; color: var(--gold-bright); }
+.sidebar-brand img { width: 36px; height: 36px; border-radius: 50%; }
 
-.login-logo { 
-  width: 70px; 
-  height: 70px; 
-  border-radius: 50%; 
-  border: 1px solid var(--gold); 
-  margin-bottom: 20px; 
-  object-fit: cover;
-}
+.metrics-widget { background: var(--charcoal); border: 1px solid var(--line); padding: 20px; text-align: left; }
+.metric-label { font-size: 0.8rem; text-transform: uppercase; color: var(--cream-dim); }
+.metric-value { font-family: 'Cinzel', serif; font-size: 1.6rem; color: var(--gold); margin-top: 4px; font-weight: 700; }
 
-.login-card h2 { 
-  font-family: 'Cinzel', serif; 
-  color: var(--gold); 
-  margin-bottom: 8px; 
-}
+.dashboard-workspace { flex: 1; display: flex; flex-direction: column; height: 100vh; background: var(--black); }
+.workspace-header { padding: 30px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; }
+.workspace-header h2 { font-family: 'Cinzel', serif; color: var(--cream); font-size: 1.5rem; }
+.filter-controls select { background: var(--charcoal); color: var(--cream); border: 1px solid var(--line); padding: 8px 16px; font-family: 'Jost', sans-serif; }
 
-.login-card p { 
-  color: var(--cream-dim); 
-  font-size: 0.9rem; 
-  margin-bottom: 24px; 
-}
-
-.form-group {
-  margin-bottom: 20px;
-  text-align: left;
-}
-
-.form-group label {
-  display: block;
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  color: var(--gold);
-  margin-bottom: 6px;
-  letter-spacing: 1px;
-}
-
-.form-group input {
-  width: 100%;
-  background: var(--black-soft);
-  border: 1px solid var(--line);
-  padding: 12px;
-  color: var(--cream);
-  font-family: 'Jost', sans-serif;
-  border-radius: 4px;
-  box-sizing: border-box;
-}
-
-.form-group input:focus {
-  outline: 1px solid var(--gold);
-}
-
-.admin-dashboard-layout { 
-  display: flex; 
-  height: 100vh; 
-  overflow: hidden; 
-}
-
-.sidebar-navigation { 
-  width: 280px; 
-  background: var(--black-soft); 
-  border-right: 1px solid var(--line); 
-  padding: 30px; 
-  display: flex; 
-  flex-direction: column; 
-  gap: 30px; 
-}
-
-.sidebar-brand { 
-  display: flex; 
-  align-items: center; 
-  gap: 12px; 
-  font-family: 'Cinzel', serif; 
-  font-size: 1.2rem; 
-  color: var(--gold-bright); 
-}
-
-.sidebar-brand img { 
-  width: 36px; 
-  height: 36px; 
-  border-radius: 50%; 
-  object-fit: cover;
-}
-
-.metrics-widget { 
-  background: var(--charcoal); 
-  border: 1px solid var(--line); 
-  padding: 20px; 
-  text-align: left; 
-}
-
-.metric-label { 
-  font-size: 0.8rem; 
-  text-transform: uppercase; 
-  color: var(--cream-dim); 
-}
-
-.metric-value { 
-  font-family: 'Cinzel', serif; 
-  font-size: 1.6rem; 
-  color: var(--gold); 
-  margin-top: 4px; 
-  font-weight: 700; 
-}
-
-.dashboard-workspace { 
-  flex: 1; 
-  display: flex; 
-  flex-direction: column; 
-  height: 100vh; 
-  background: var(--black); 
-}
-
-.workspace-header { 
-  padding: 30px; 
-  border-bottom: 1px solid var(--line); 
-  display: flex; 
-  justify-content: space-between; 
-  align-items: center; 
-}
-
-.workspace-header h2 { 
-  font-family: 'Cinzel', serif; 
-  color: var(--cream); 
-  font-size: 1.5rem; 
-}
-
-.filter-controls select { 
-  background: var(--charcoal); 
-  color: var(--cream); 
-  border: 1px solid var(--line); 
-  padding: 8px 16px; 
-  font-family: 'Jost', sans-serif; 
-  outline: none;
-}
-
-.orders-feed-stream { 
-  flex: 1; 
-  padding: 30px; 
-  overflow-y: auto; 
-  display: grid; 
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); 
-  gap: 20px; 
-  align-content: flex-start; 
-}
-
-.order-admin-card { 
-  background: var(--charcoal); 
-  border: 1px solid var(--line); 
-  padding: 22px; 
-  display: flex; 
-  flex-direction: column; 
-  gap: 14px; 
-  position: relative; 
-}
-
+.orders-feed-stream { flex: 1; padding: 30px; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; align-content: flex-start; }
+.order-admin-card { background: var(--charcoal); border: 1px solid var(--line); padding: 22px; display: flex; flex-direction: column; gap: 14px; position: relative; }
 .order-admin-card.status-placed { border-left: 4px solid var(--red-glow); }
-.order-admin-card.status-received { border-left: 4px solid var(--gold-dim); }
 .order-admin-card.status-preparing { border-left: 4px solid var(--gold); }
 .order-admin-card.status-ready { border-left: 4px solid #4caf50; }
-.order-admin-card.status-out_for_delivery { border-left: 4px solid var(--gold-bright); }
-.order-admin-card.status-completed { border-left: 4px solid var(--charcoal-light); opacity: 0.6; }
-.order-admin-card.status-cancelled { border-left: 4px solid #555; opacity: 0.4; }
 
-.admin-card-header { 
-  display: flex; 
-  justify-content: space-between; 
-  border-bottom: 1px solid rgba(201,162,75,0.08); 
-  padding-bottom: 8px; 
-  align-items: center;
-}
+.admin-card-header { display: flex; justify-content: space-between; border-bottom: 1px solid rgba(201,162,75,0.08); padding-bottom: 8px; }
+.admin-card-id { font-family: 'Cinzel', serif; font-weight: 700; color: var(--gold-bright); }
+.admin-card-type { font-size: 0.75rem; text-transform: uppercase; background: var(--charcoal-light); padding: 2px 8px; color: var(--cream); }
 
-.admin-card-id { 
-  font-family: 'Cinzel', serif; 
-  font-weight: 700; 
-  color: var(--gold-bright); 
-}
-
-.admin-card-type { 
-  font-size: 0.75rem; 
-  text-transform: uppercase; 
-  background: var(--charcoal-light); 
-  padding: 2px 8px; 
-  color: var(--cream); 
-  border-radius: 2px;
-}
-
-.admin-card-body p { 
-  font-size: 0.85rem; 
-  margin-bottom: 4px; 
-}
-
-.admin-card-items { 
-  background: var(--black-soft); 
-  padding: 10px; 
-  font-size: 0.85rem; 
-  margin-top: 8px; 
-  border-radius: 4px;
-  line-height: 1.5;
-}
-
-.admin-card-actions { 
-  display: grid; 
-  grid-template-columns: 1fr; 
-  gap: 8px; 
-  margin-top: auto; 
-  padding-top: 12px; 
-}
-
-.admin-card-actions.two-buttons {
-  grid-template-columns: 1fr 1fr;
-}
+.admin-card-body p { font-size: 0.85rem; margin-bottom: 4px; }
+.admin-card-items { background: var(--black-soft); padding: 10px; font-size: 0.85rem; margin-top: 8px; }
+.admin-card-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: auto; padding-top: 12px; }
 
 .hidden { display: none !important; }
