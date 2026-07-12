@@ -1,283 +1,98 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Smoke & Slice | Premium Burgers, Pizza & Pasta — Rīga</title>
-<meta name="description" content="Smoke & Slice — premium burgers, pizza and pasta in Imanta, Rīga. Order online for delivery or pickup.">
-<link rel="icon" type="image/jpeg" href="images/logo.jpg">
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smoke & Slice | Premium Burgers, Pizza & Pasta — Rīga</title>
+  <meta name="description" content="Smoke & Slice — premium burgers, pizza and pasta in Imanta, Rīga. Order online for delivery or pickup.">
+  <link rel="icon" type="image/jpeg" href="logo.jpg">
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="firebase.js"></script>
 </head>
 <body>
 
-<!-- =========================================================
-     HEADER
-     ========================================================= -->
-<header class="site-header" id="siteHeader">
-  <div class="container nav-inner">
-    <a href="#home" class="brand">
-      <img src="images/logo.jpg" alt="Smoke & Slice logo">
-      <span class="brand-name">Smoke <span>&amp;</span> Slice</span>
-    </a>
+  <header class="site-header" id="siteHeader">
+    <div class="container nav-inner">
+      <a href="#home" class="brand">
+        <img src="logo.jpg" alt="Smoke & Slice logo">
+        <span class="brand-name">Smoke <span>&amp;</span> Slice</span>
+      </a>
 
-    <nav class="nav-links" id="navLinks">
-      <a href="#home" class="nav-link active">Home</a>
-      <a href="#menu" class="nav-link">Menu</a>
-      <a href="#about" class="nav-link">About</a>
-      <a href="#contact" class="nav-link">Contact</a>
-    </nav>
+      <nav class="nav-links" id="navLinks">
+        <a href="#home" class="nav-link active">Home</a>
+        <a href="#menu" class="nav-link">Menu</a>
+        <a href="#about" class="nav-link">About</a>
+        <a href="#contact" class="nav-link">Contact</a>
+      </nav>
 
-    <div class="nav-actions">
-      <button class="cart-btn" id="cartToggle" aria-label="Open cart">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-        <span class="label">Cart</span>
-        <span class="cart-count" id="cartCount">0</span>
+      <div class="nav-actions">
+        <button class="cart-btn" id="cartToggle" aria-label="Open cart">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+          <span class="label">Cart</span>
+          <span class="badge" id="cartBadge">0</span>
+        </button>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle Navigation">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="nav-backdrop" id="navBackdrop"></div>
+
+  <main>
+    <section id="home" class="hero-section">
+      <div class="container hero-content">
+        <h1 class="hero-title">PROHIBITION ERA FLAVORS. <br>MODERN LUXURY.</h1>
+        <p class="hero-subtitle">Premium wood-fired smoked burgers, artisan hand-tossed pizzas, and slow-cooked pastas crafted behind closed doors.</p>
+        <div class="hero-actions">
+          <a href="#menu" class="btn btn-red">Explore the Menu</a>
+          <a href="tracking.html" class="btn btn-outline">Track Your Order</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="menu" class="menu-section">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">The Secret Menu</h2>
+          <p class="section-subtitle">Select a category below to view our exclusive creations.</p>
+        </div>
+        
+        <div class="menu-tabs" id="menuTabs"></div>
+        
+        <div class="menu-grid" id="menuGrid"></div>
+      </div>
+    </section>
+  </main>
+
+  <div class="overlay" id="cartOverlay"></div>
+  <aside class="cart-panel" id="cartPanel" aria-label="Shopping cart">
+    <div class="cart-header">
+      <h3>Your Order</h3>
+      <button class="icon-btn" id="cartClose" aria-label="Close cart">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
-      <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">
-        <span></span><span></span><span></span>
-      </button>
     </div>
-  </div>
-</header>
-<div class="nav-backdrop" id="navBackdrop"></div>
+    <div class="cart-items" id="cartItems">
+      <div class="cart-empty">Your cart is empty. Add something delicious from the menu.</div>
+    </div>
+    <div class="cart-footer">
+      <div class="cart-total-row"><span>Total</span><span class=\"amount\" id="cartTotal">€0.00</span></div>
+      <button class="btn btn-red btn-block" id="checkoutBtn" disabled>Proceed to Checkout</button>
+      <button class="cart-empty-btn" id="emptyCartBtn">Empty Cart</button>
+    </div>
+  </aside>
 
-<!-- =========================================================
-     HERO
-     ========================================================= -->
-<section class="hero" id="home">
-  <div class="hero-bg"></div>
-  <div class="hero-content">
-    <img src="images/logo.jpg" alt="Smoke & Slice" class="hero-logo">
-    <h1>Smoke <span>&amp;</span> Slice</h1>
-    <p class="hero-tagline">The Only Thing We Press Is Patties</p>
-    <p class="hero-sub">Premium burgers, hand-stretched pizza &amp; pasta — fired up daily in Imanta, Rīga.</p>
-    <div class="hero-actions">
-      <a href="#menu" class="btn btn-gold">Order Now</a>
-      <a href="#contact" class="btn btn-outline">Find Us</a>
-    </div>
-  </div>
-  <div class="hero-scroll"><span>Scroll</span><span class="stick"></span></div>
-</section>
-
-<!-- =========================================================
-     ABOUT
-     ========================================================= -->
-<section class="about" id="about">
-  <div class="container about-grid">
-    <div class="about-frame reveal">
-      <img src="https://images.unsplash.com/photo-1571091718767-18b5b1457add?auto=format&fit=crop&w=1000&q=80" alt="Signature burger at Smoke & Slice">
-      <span class="about-frame-caption">Est. Imanta Tirgus Food Court</span>
-    </div>
-    <div class="about-copy reveal">
-      <span class="eyebrow">Our Story</span>
-      <h2>A kitchen built on smoke, pressed patties &amp; slow-earned flavour.</h2>
-      <p>Smoke &amp; Slice was born out of a simple obsession: burgers pressed to order, pizza stretched by hand, and pasta finished the way an Italian grandmother would insist on. Every patty is homemade, every sauce made in-house, and every pie fired fresh — nothing sits waiting under a heat lamp.</p>
-      <p>Tucked inside the Imanta Tirgus Food Court in Rīga, we keep the kitchen open from morning past midnight, so a craving at noon or 1am gets the same care. Smoky, generous, unmistakably ours.</p>
-      <div class="about-stats">
-        <div>
-          <div class="stat-num">100%</div>
-          <div class="stat-label">Homemade Patties</div>
-        </div>
-        <div>
-          <div class="stat-num">16h</div>
-          <div class="stat-label">Kitchen Open Daily</div>
-        </div>
-        <div>
-          <div class="stat-num">3</div>
-          <div class="stat-label">Cuisines, One Menu</div>
-        </div>
+  <div class="checkout-modal" id="checkoutModal">
+    <div class="overlay" id="checkoutOverlay"></div>
+    <div class="checkout-box" id="checkoutBox">
       </div>
-    </div>
   </div>
-</section>
 
-<!-- =========================================================
-     MENU
-     ========================================================= -->
-<section class="menu-section" id="menu">
-  <div class="container">
-    <div class="section-head reveal">
-      <div class="deco-divider"><span class="line"></span><span class="mark">❦</span><span class="line right"></span></div>
-      <span class="eyebrow">Our Menu</span>
-      <h2>Fresh. Smoky. Unforgettable.</h2>
-      <p>Every dish below is exactly what leaves our kitchen — same names, same prices, same recipe every time.</p>
-    </div>
+  <div class="toast" id="toast"></div>
 
-    <div class="menu-tabs" id="menuTabs"></div>
-    <div class="menu-grid" id="menuGrid"></div>
-
-    <div class="allergen-legend reveal">
-      <h4>Allergen Information</h4>
-      <p class="allergen-note" style="margin-top:0;margin-bottom:16px;">In accordance with EU Regulation No. 1169/2011 &amp; Latvian food labelling requirements. Allergen numbers next to each dish correspond to the list below.</p>
-      <div class="allergen-list" id="allergenList"></div>
-      <p class="allergen-note">Please inform your server of any allergy or intolerance before ordering — dishes are prepared in a shared kitchen. Menu valid for a limited promotional period.</p>
-    </div>
-  </div>
-</section>
-
-<!-- =========================================================
-     DELIVERY
-     ========================================================= -->
-<section class="delivery-strip">
-  <div class="container">
-    <div class="section-head reveal">
-      <span class="eyebrow">Delivery</span>
-      <h2>Straight To Your Door</h2>
-    </div>
-    <div class="delivery-grid reveal">
-      <div class="delivery-card">
-        <div class="zone">0–2 km</div>
-        <div class="fee">Free Delivery</div>
-        <div class="range">On the house</div>
-      </div>
-      <div class="delivery-card">
-        <div class="zone">2–5 km</div>
-        <div class="fee">€3.00</div>
-        <div class="range">Flat fee</div>
-      </div>
-      <div class="delivery-card">
-        <div class="zone">5–8 km</div>
-        <div class="fee">€4.00</div>
-        <div class="range">Flat fee</div>
-      </div>
-      <div class="delivery-card">
-        <div class="zone">8 km +</div>
-        <div class="fee">We'll Call You</div>
-        <div class="range">Fee confirmed by phone</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- =========================================================
-     CONTACT
-     ========================================================= -->
-<section class="contact" id="contact">
-  <div class="container">
-    <div class="section-head reveal">
-      <span class="eyebrow">Visit Or Call</span>
-      <h2>Find Smoke &amp; Slice</h2>
-    </div>
-    <div class="contact-grid">
-      <div class="contact-info reveal">
-        <div class="contact-item">
-          <div class="contact-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-          </div>
-          <div>
-            <h4>Location</h4>
-            <p>Imanta Tirgus Food Court<br>Kurzemes prospekts 3, Kurzemes rajons<br>Rīga LV-1067, Latvia</p>
-          </div>
-        </div>
-        <div class="contact-item">
-          <div class="contact-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-          </div>
-          <div>
-            <h4>Call Us</h4>
-            <p><a href="tel:+37129367093">+371 29367093</a></p>
-          </div>
-        </div>
-        <div class="contact-item">
-          <div class="contact-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          </div>
-          <div>
-            <h4>Opening Hours</h4>
-            <p>Monday – Sunday<br>10:00 AM – 2:00 AM</p>
-          </div>
-        </div>
-
-        <div class="contact-cta">
-          <a href="tel:+37129367093" class="btn btn-red">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-            Call Now
-          </a>
-          <a href="https://wa.me/37129367093" target="_blank" rel="noopener" class="btn btn-outline">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.6 6.32A7.85 7.85 0 0 0 12.02 4a7.94 7.94 0 0 0-6.87 11.88L4 20l4.24-1.11a7.93 7.93 0 0 0 3.78.96h0a7.94 7.94 0 0 0 7.93-7.94 7.87 7.87 0 0 0-2.35-5.59zm-5.58 12.2h0a6.6 6.6 0 0 1-3.36-.92l-.24-.14-2.5.66.67-2.44-.16-.25a6.6 6.6 0 0 1 10.34-8.13 6.55 6.55 0 0 1 1.95 4.66 6.6 6.6 0 0 1-6.7 6.56zm3.6-4.93c-.2-.1-1.17-.58-1.35-.64-.18-.07-.31-.1-.45.1-.13.2-.51.64-.62.77-.11.13-.23.14-.43.05a5.4 5.4 0 0 1-1.59-.98 5.95 5.95 0 0 1-1.1-1.37c-.11-.2 0-.3.09-.4.09-.1.2-.23.3-.35.1-.12.13-.2.2-.33.07-.13.03-.25-.02-.35-.05-.1-.45-1.08-.61-1.48-.16-.39-.33-.33-.45-.34h-.38a.74.74 0 0 0-.53.25 2.24 2.24 0 0 0-.7 1.67 3.9 3.9 0 0 0 .82 2.06 8.9 8.9 0 0 0 3.4 3c.48.2.85.33 1.14.42.48.15.91.13 1.26.08.38-.06 1.17-.48 1.34-.94.17-.46.17-.86.12-.94-.05-.08-.18-.13-.38-.23z"/></svg>
-            WhatsApp
-          </a>
-        </div>
-      </div>
-
-      <div class="map-frame reveal">
-        <iframe
-          src="https://www.google.com/maps?q=Kurzemes+prospekts+3,+R%C4%ABga,+LV-1067,+Latvia&output=embed"
-          loading="lazy"
-          referrerpolicy="no-referrer-when-downgrade"
-          title="Smoke & Slice location map"></iframe>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- =========================================================
-     FOOTER
-     ========================================================= -->
-<footer class="site-footer">
-  <div class="container">
-    <div class="footer-grid">
-      <div>
-        <div class="footer-brand">
-          <img src="images/logo.jpg" alt="Smoke & Slice logo">
-          <span>Smoke &amp; Slice</span>
-        </div>
-        <p class="footer-tagline">The Only Thing We Press Is Patties</p>
-        <div class="footer-social">
-          <a href="#" aria-label="Instagram"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1"/></svg></a>
-          <a href="#" aria-label="Facebook"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>
-          <a href="https://wa.me/37129367093" target="_blank" rel="noopener" aria-label="WhatsApp"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.6 6.32A7.85 7.85 0 0 0 12.02 4a7.94 7.94 0 0 0-6.87 11.88L4 20l4.24-1.11a7.93 7.93 0 0 0 3.78.96h0a7.94 7.94 0 0 0 7.93-7.94 7.87 7.87 0 0 0-2.35-5.59z"/></svg></a>
-        </div>
-      </div>
-      <div class="footer-col">
-        <h5>Visit</h5>
-        <p>Imanta Tirgus Food Court<br>Kurzemes prospekts 3<br>Rīga LV-1067, Latvia</p>
-      </div>
-      <div class="footer-col">
-        <h5>Contact &amp; Hours</h5>
-        <a href="tel:+37129367093">+371 29367093</a>
-        <p>Monday – Sunday<br>10:00 AM – 2:00 AM</p>
-      </div>
-    </div>
-    <div class="footer-bottom">&copy; 2026 Smoke &amp; Slice. All rights reserved.</div>
-  </div>
-</footer>
-
-<!-- =========================================================
-     CART PANEL
-     ========================================================= -->
-<div class="overlay" id="cartOverlay"></div>
-<aside class="cart-panel" id="cartPanel" aria-label="Shopping cart">
-  <div class="cart-header">
-    <h3>Your Order</h3>
-    <button class="icon-btn" id="cartClose" aria-label="Close cart">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-    </button>
-  </div>
-  <div class="cart-items" id="cartItems">
-    <div class="cart-empty">Your cart is empty. Add something delicious from the menu.</div>
-  </div>
-  <div class="cart-footer">
-    <div class="cart-total-row"><span>Total</span><span class="amount" id="cartTotal">€0.00</span></div>
-    <button class="btn btn-red btn-block" id="checkoutBtn" disabled>Proceed to Checkout</button>
-    <button class="cart-empty-btn" id="emptyCartBtn">Empty Cart</button>
-  </div>
-</aside>
-
-<!-- =========================================================
-     CHECKOUT MODAL
-     ========================================================= -->
-<div class="checkout-modal" id="checkoutModal">
-  <div class="overlay open"></div>
-  <div class="checkout-box" id="checkoutBox">
-    <!-- populated by script.js -->
-  </div>
-</div>
-
-<!-- Toast -->
-<div class="toast" id="toast"></div>
-
-<script src="menu.js"></script>
-<script src="script.js"></script>
+  <script src="menu.js"></script>
+  <script src="script.js" type="module"></script>
 </body>
 </html>
