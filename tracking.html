@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Order Tracking | Smoke & Slice</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="tracking.css">
+  <script type="module" src="tracking.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav-inner">
+      <a href="index.html" class="brand">
+        <img src="logo.jpg" alt="Logo">
+        <span class="brand-name">Smoke <span>&amp;</span> Slice</span>
+      </a>
+      <a href="index.html" class="btn btn-outline btn-sm">Return Home</a>
+    </div>
+  </header>
+
+  <main class="tracking-main">
+    <div class="container tracking-container">
+      <div class="search-box" id="searchBoxContainer">
+        <h2>Track Your Live Order</h2>
+        <p>Enter your 4-digit numeric receipt identifier below.</p>
+        <div class="search-form-row">
+          <input type="text" id="trackingIdInput" placeholder="E.g. 1042">
+          <button id="trackBtn" class="btn btn-red">Track</button>
+        </div>
+      </div>
+
+      <div class="tracking-display-card hidden" id="trackingDisplayCard">
+        <div class="card-header-status">
+          <h3>Order <span id="displayOrderId">#----</span></h3>
+          <div class="current-badge-status" id="currentStatusBadge">Placed</div>
+        </div>
+        
+        <div class="timeline-visualizer" id="timelineVisualizer">
+          </div>
+
+        <div class="order-meta-info">
+          <h4>Fulfillment Overview</h4>
+          <p><strong>Customer Name:</strong> <span id="lblCustName">-</span></p>
+          <p><strong>Destined Location:</strong> <span id="lblCustAddress">-</span></p>
+          <div id="itemsOrderedList" class="items-ordered-list"></div>
+          <hr style="border:0; border-top:1px solid var(--line); margin: 15px 0;">
+          <div class="total-row-display">Total Charged: <span id="lblOrderTotal" style="color:var(--gold-bright);">€0.00</span></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</body>
+</html>
