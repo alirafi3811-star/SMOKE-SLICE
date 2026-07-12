@@ -4,9 +4,9 @@
              Cart | Checkout | Toast
    Depends on MENU_DATA and ALLERGEN_LEGEND from menu.js (loaded first).
    ========================================================================= */
- 
+
 document.addEventListener('DOMContentLoaded', () => {
- 
+
   /* ======================================================================
      1. NAVIGATION
      ====================================================================== */
@@ -15,13 +15,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const navLinks      = document.getElementById('navLinks');
   const navBackdrop   = document.getElementById('navBackdrop');
   const navLinkItems  = document.querySelectorAll('.nav-link');
- 
+
   function closeMobileNav() {
     navLinks.classList.remove('mobile-open');
     navToggle.classList.remove('open');
     navBackdrop.classList.remove('open');
   }
- 
+
   navToggle.addEventListener('click', () => {
     const isOpen = navLinks.classList.toggle('mobile-open');
     navToggle.classList.toggle('open', isOpen);
@@ -29,32 +29,32 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   navBackdrop.addEventListener('click', closeMobileNav);
   navLinkItems.forEach(link => link.addEventListener('click', closeMobileNav));
- 
+
   // Shrink header + highlight active section on scroll
   const sections = ['home', 'menu', 'about', 'contact']
     .map(id => document.getElementById(id))
     .filter(Boolean);
- 
+
   function onScroll() {
     siteHeader.classList.toggle('scrolled', window.scrollY > 40);
- 
+
     let current = sections[0];
     const scrollPos = window.scrollY + 140;
     sections.forEach(sec => { if (sec.offsetTop <= scrollPos) current = sec; });
- 
+
     navLinkItems.forEach(link => {
       link.classList.toggle('active', link.getAttribute('href') === '#' + current.id);
     });
   }
   window.addEventListener('scroll', onScroll, { passive: true });
   onScroll();
- 
+
   /* ======================================================================
      2. REVEAL-ON-SCROLL ANIMATIONS
      ====================================================================== */
   const revealTargets = document.querySelectorAll('.reveal, .menu-card, .delivery-card, .sauce-card');
   revealTargets.forEach(el => el.classList.add('reveal'));
- 
+
   const revealObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
@@ -63,10 +63,10 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }, { threshold: 0.12 });
- 
+
   function observeReveal(el) { revealObserver.observe(el); }
   document.querySelectorAll('.reveal').forEach(observeReveal);
- 
+
   /* ======================================================================
      3. MENU RENDERING
      ====================================================================== */
@@ -74,14 +74,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const menuGridEl  = document.getElementById('menuGrid');
   const allergenListEl = document.getElementById('allergenList');
   let activeCategory = MENU_DATA[0].id;
- 
+
   function buildTabs() {
     menuTabsEl.innerHTML = MENU_DATA.map(cat => `
       <button class="menu-tab ${cat.id === activeCategory ? 'active' : ''}" data-cat="${cat.id}">
         ${cat.label}
       </button>
     `).join('');
- 
+
     menuTabsEl.querySelectorAll('.menu-tab').forEach(tab => {
       tab.addEventListener('click', () => {
         activeCategory = tab.dataset.cat;
@@ -90,26 +90,26 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
   }
- 
+
   function currencyFmt(num) {
     return '€' + num.toFixed(2);
   }
- 
+
   function renderMenu() {
     const category = MENU_DATA.find(c => c.id === activeCategory);
     if (!category) return;
- 
+
     if (category.id === 'sauces') {
       menuGridEl.style.display = 'none';
       renderSauces(category);
       return;
     }
- 
+
     // remove any sauce grid leftover
     const existingSauceGrid = document.getElementById('sauceGrid');
     if (existingSauceGrid) existingSauceGrid.remove();
     menuGridEl.style.display = 'grid';
- 
+
     menuGridEl.innerHTML = category.items.map(item => `
       <article class="menu-card reveal" data-id="${item.id}">
         <div class="menu-card-media">
@@ -130,11 +130,11 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       </article>
     `).join('');
- 
+
     menuGridEl.querySelectorAll('.menu-card').forEach(observeReveal);
     bindAddToCartButtons();
   }
- 
+
   function renderSauces(category) {
     let sauceGrid = document.getElementById('sauceGrid');
     if (!sauceGrid) {
@@ -156,22 +156,22 @@ document.addEventListener('DOMContentLoaded', () => {
     sauceGrid.querySelectorAll('.sauce-card').forEach(observeReveal);
     bindAddToCartButtons();
   }
- 
+
   function buildAllergenLegend() {
     allergenListEl.innerHTML = Object.entries(ALLERGEN_LEGEND).map(([num, name]) => `
       <span><b>${num}</b> — ${name}</span>
     `).join('');
   }
- 
+
   buildTabs();
   renderMenu();
   buildAllergenLegend();
- 
+
   /* ======================================================================
      4. CART
      ====================================================================== */
   let cart = []; // { id, name, price, image, qty }
- 
+
   const cartToggle   = document.getElementById('cartToggle');
   const cartClose     = document.getElementById('cartClose');
   const cartOverlay   = document.getElementById('cartOverlay');
@@ -181,7 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const cartTotalEl   = document.getElementById('cartTotal');
   const emptyCartBtn  = document.getElementById('emptyCartBtn');
   const checkoutBtn   = document.getElementById('checkoutBtn');
- 
+
   function findMenuItem(id) {
     for (const cat of MENU_DATA) {
       const found = cat.items.find(i => i.id === id);
@@ -189,7 +189,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     return null;
   }
- 
+
   function openCart() {
     cartPanel.classList.add('open');
     cartOverlay.classList.add('open');
@@ -201,7 +201,7 @@ document.addEventListener('DOMContentLoaded', () => {
   cartToggle.addEventListener('click', openCart);
   cartClose.addEventListener('click', closeCart);
   cartOverlay.addEventListener('click', closeCart);
- 
+
   function addToCart(id) {
     const item = findMenuItem(id);
     if (!item) return;
@@ -215,7 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
     openCart();
     showToast(`${item.name} added to your order`);
   }
- 
+
   function changeQty(id, delta) {
     const line = cart.find(c => c.id === id);
     if (!line) return;
@@ -223,30 +223,30 @@ document.addEventListener('DOMContentLoaded', () => {
     if (line.qty <= 0) cart = cart.filter(c => c.id !== id);
     renderCart();
   }
- 
+
   function removeItem(id) {
     cart = cart.filter(c => c.id !== id);
     renderCart();
   }
- 
+
   function cartTotal() {
     return cart.reduce((sum, c) => sum + c.price * c.qty, 0);
   }
- 
+
   function cartCount() {
     return cart.reduce((sum, c) => sum + c.qty, 0);
   }
- 
+
   function renderCart() {
     cartCountEl.textContent = cartCount();
     cartTotalEl.textContent = currencyFmt(cartTotal());
     checkoutBtn.disabled = cart.length === 0;
- 
+
     if (cart.length === 0) {
       cartItemsEl.innerHTML = `<div class="cart-empty">Your cart is empty. Add something delicious from the menu.</div>`;
       return;
     }
- 
+
     cartItemsEl.innerHTML = cart.map(line => `
       <div class="cart-item" data-id="${line.id}">
         ${line.image
@@ -266,7 +266,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       </div>
     `).join('');
- 
+
     cartItemsEl.querySelectorAll('.qty-plus').forEach(btn =>
       btn.addEventListener('click', () => changeQty(btn.dataset.id, 1)));
     cartItemsEl.querySelectorAll('.qty-minus').forEach(btn =>
@@ -274,7 +274,7 @@ document.addEventListener('DOMContentLoaded', () => {
     cartItemsEl.querySelectorAll('.remove-item').forEach(btn =>
       btn.addEventListener('click', () => removeItem(btn.dataset.id)));
   }
- 
+
   function bindAddToCartButtons() {
     document.querySelectorAll('.add-to-cart').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -286,20 +286,20 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
   }
- 
+
   emptyCartBtn.addEventListener('click', () => {
     cart = [];
     renderCart();
   });
- 
+
   renderCart();
- 
+
   /* ======================================================================
      5. CHECKOUT
      ====================================================================== */
   const checkoutModal = document.getElementById('checkoutModal');
   const checkoutBox   = document.getElementById('checkoutBox');
- 
+
   function deliveryFee(distanceKey) {
     switch (distanceKey) {
       case '0-2': return { fee: 0, label: 'Free (0–2 km)' };
@@ -309,10 +309,10 @@ document.addEventListener('DOMContentLoaded', () => {
       default: return { fee: 0, label: '—' };
     }
   }
- 
+
   function buildCheckoutForm() {
     const subtotal = cartTotal();
- 
+
     checkoutBox.innerHTML = `
       <div class="checkout-head">
         <div>
@@ -323,13 +323,13 @@ document.addEventListener('DOMContentLoaded', () => {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
- 
+
       <form id="orderForm">
         <div class="fulfilment-toggle">
           <label><input type="radio" name="fulfilment" value="delivery" checked><span>Delivery</span></label>
           <label><input type="radio" name="fulfilment" value="pickup"><span>Pickup</span></label>
         </div>
- 
+
         <div class="form-grid">
           <div class="form-field full">
             <label for="custName">Customer Name</label>
@@ -343,7 +343,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <label for="custEmail">Email</label>
             <input type="email" id="custEmail" name="custEmail" required placeholder="you@example.com">
           </div>
- 
+
           <div class="form-field full" id="addressField">
             <label for="custAddress">Address</label>
             <input type="text" id="custAddress" name="custAddress" placeholder="Street and house number">
@@ -356,7 +356,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <label for="custPostal">Postal Code</label>
             <input type="text" id="custPostal" name="custPostal" placeholder="LV-....">
           </div>
- 
+
           <div class="form-field full" id="distanceField">
             <label for="custDistance">Distance From Restaurant</label>
             <select id="custDistance" name="custDistance">
@@ -367,17 +367,17 @@ document.addEventListener('DOMContentLoaded', () => {
             </select>
           </div>
         </div>
- 
+
         <div class="payment-options">
           <label><input type="radio" name="payment" value="cash" checked> Cash on Delivery</label>
           <label><input type="radio" name="payment" value="pickup-pay"> Pay at Pickup</label>
         </div>
- 
+
         <div class="form-field full" style="margin-bottom:22px;">
           <label for="custNotes">Special Instructions</label>
           <textarea id="custNotes" name="custNotes" placeholder="Allergies, extra sauce, cheese on fries, etc."></textarea>
         </div>
- 
+
         <div class="order-summary">
           <h4>Order Summary</h4>
           <div id="summaryLines"></div>
@@ -386,18 +386,18 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="summary-line total"><span>Grand Total</span><span id="grandTotalAmount">${currencyFmt(subtotal)}</span></div>
           <p class="delivery-note" id="deliveryNote"></p>
         </div>
- 
+
         <button type="submit" class="btn btn-red btn-block">Place Order</button>
       </form>
     `;
- 
+
     document.getElementById('checkoutClose').addEventListener('click', closeCheckout);
- 
+
     const summaryLines = document.getElementById('summaryLines');
     summaryLines.innerHTML = cart.map(line => `
       <div class="summary-line"><span>${line.qty} × ${line.name}</span><span>${currencyFmt(line.price * line.qty)}</span></div>
     `).join('');
- 
+
     const distanceField   = document.getElementById('distanceField');
     const addressField    = document.getElementById('addressField');
     const apartmentField  = document.getElementById('apartmentField');
@@ -407,7 +407,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const grandTotalEl    = document.getElementById('grandTotalAmount');
     const deliveryNoteEl  = document.getElementById('deliveryNote');
     const addressInput    = document.getElementById('custAddress');
- 
+
     function updateTotals() {
       const isDelivery = document.querySelector('input[name="fulfilment"]:checked').value === 'delivery';
       distanceField.style.display   = isDelivery ? '' : 'none';
@@ -415,7 +415,7 @@ document.addEventListener('DOMContentLoaded', () => {
       apartmentField.style.display  = isDelivery ? '' : 'none';
       postalField.style.display     = isDelivery ? '' : 'none';
       addressInput.required = isDelivery;
- 
+
       let grand = subtotal;
       if (isDelivery) {
         const { fee, label } = deliveryFee(distanceSelect.value);
@@ -434,26 +434,26 @@ document.addEventListener('DOMContentLoaded', () => {
         grandTotalEl.textContent = currencyFmt(subtotal);
       }
     }
- 
+
     document.querySelectorAll('input[name="fulfilment"]').forEach(r => r.addEventListener('change', updateTotals));
     distanceSelect.addEventListener('change', updateTotals);
     updateTotals();
- 
+
     document.getElementById('orderForm').addEventListener('submit', (e) => {
       e.preventDefault();
       submitOrder(subtotal);
     });
   }
- 
+
   function submitOrder(subtotal) {
     const form = document.getElementById('orderForm');
     const data = new FormData(form);
     const isDelivery = data.get('fulfilment') === 'delivery';
     const { fee, label } = isDelivery ? deliveryFee(data.get('custDistance')) : { fee: 0, label: 'Pickup' };
     const grand = fee === null ? subtotal : subtotal + fee;
- 
+
     const orderLines = cart.map(l => `${l.qty}x ${l.name} — ${currencyFmt(l.price * l.qty)}`).join('%0A');
- 
+
     const message =
       `*New Order — Smoke %26 Slice*%0A%0A` +
       `Name: ${encodeURIComponent(data.get('custName'))}%0A` +
@@ -467,9 +467,9 @@ document.addEventListener('DOMContentLoaded', () => {
       `Delivery: ${label}%0A` +
       `Grand Total: ${fee === null ? currencyFmt(subtotal) + ' + delivery TBC' : currencyFmt(grand)}%0A%0A` +
       `Notes: ${encodeURIComponent(data.get('custNotes') || '-')}`;
- 
+
     const waLink = `https://wa.me/37129367093?text=${message}`;
- 
+
     checkoutBox.innerHTML = `
       <div class="checkout-success">
         <div class="check-icon">
@@ -490,7 +490,7 @@ document.addEventListener('DOMContentLoaded', () => {
       renderCart();
     });
   }
- 
+
   function openCheckout() {
     if (cart.length === 0) return;
     buildCheckoutForm();
@@ -500,9 +500,9 @@ document.addEventListener('DOMContentLoaded', () => {
   function closeCheckout() {
     checkoutModal.classList.remove('open');
   }
- 
+
   checkoutBtn.addEventListener('click', openCheckout);
- 
+
   /* ======================================================================
      6. TOAST
      ====================================================================== */
@@ -514,5 +514,5 @@ document.addEventListener('DOMContentLoaded', () => {
     toastEl.classList.add('show');
     toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2200);
   }
- 
+
 });
